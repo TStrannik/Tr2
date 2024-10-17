@@ -11,7 +11,8 @@
 
 using namespace std;
 
-#pragma region VOIDS
+#pragma region syntax
+
 void start() {
     setlocale(LC_ALL, "RU_ru");
     system("color 70\n cls\n");
@@ -20,18 +21,24 @@ void start() {
 template <typename T> void w (T s) { std::cout << s; }
 template <typename T> void wl(T s) { std::cout << s << std::endl; }
 void wl() { std::cout << std::endl; }
-#pragma endregion VOIDS
+
+inline void ttsleep(float t) { this_thread::sleep_for(chrono::milliseconds((int)(t * 1000))); }
+
+#pragma endregion sugar
 
 #pragma endregion HEADERS
 #pragma region DEFS
 
+#pragma region THREADS
+
 //#define MUTEX_1
 //#define MUTEX_2
-#define MUTEX_3
-#define BABKA
+//#define MUTEX_3
+#define MUTEX_4
 
+#pragma endregion mutex, reqursive_mutex, lock_guard, unique_lock mutex
 
-
+#pragma region voids
 
 #ifdef MUTEX_1
 
@@ -115,22 +122,85 @@ void Print2() {
 
 #endif // MUTEX_2
 
+#ifdef MUTEX_3
 
+static int C = 10;      // Number of calls
+recursive_mutex rm;
+
+void Foo(int a, int C) {
+
+    rm.lock(); C++;
+
+    w(a); w(" ");
+    ttsleep(0.3);
+    if (a <= 1) {
+        wl();
+        C--; rm.unlock();
+        return;
+    }
+    a--;
+    Foo(a, C);
+
+    C--; rm.unlock();
+
+}
+
+#endif // MUTEX_3
+
+#ifdef MUTEX_4
+
+mutex mtx;
+
+void Print(char ch) {
+
+    unique_lock <mutex> ulock(mtx, defer_lock);
+
+    ttsleep(2);
+
+    //unique_lock <mutex> ulock(mtx);
+
+    ulock.lock();
+
+
+    for (size_t i = 0; i < 5; i++)
+    {
+        for (size_t j = 0; j < 10; j++)
+        {
+            w(ch);
+            ttsleep(0.01);
+        }
+        wl();
+    }
+    wl();
+
+
+    ulock.unlock();
+
+
+    ttsleep(2);
+
+}
+
+
+
+
+#endif
+
+#pragma endregion voids
 
 #pragma endregion DEFS
 
 
 
-#ifdef MUTEX_3
 
 
 
-recursive_mutex rm;
-mutex m;
 
 
 
-#endif // MUTEX_3
+
+
+
 
 
 
@@ -142,9 +212,7 @@ int main() {
     SimpleTimer t("main");
     
 
-
 #ifdef MUTEX_1
-    
 
     thread t1(print, '*');
     thread t2(print, '#');
@@ -159,11 +227,9 @@ int main() {
     // print('#');
     // print('@');
 
-
 #endif // MUTEX_1
 
 #ifdef MUTEX_2
-
 
     thread t1(Print);
     thread t2(Print2);
@@ -173,20 +239,34 @@ int main() {
 
 #endif // MUTEX_2
 
-    #ifdef MUTEX_3
+#ifdef MUTEX_3
+
+    thread t1(Foo, 10, C);
+    thread t2(Foo, 10, C);
+
+    t1.join();
+    t2.join();
+
+    wl(); wl(C);
+
+#endif // MUTEX_3
+
+#ifdef MUTEX_4
+
+
+    thread t1(Print, '#');
+    thread t2(Print, '@');
+
+    t1.join();
+    t2.join();
+
+
+#endif 
+    
 #pragma endregion main() {
-
-
-    rm.lock();
-    rm.lock();
-
-    rm.unlock();
-    rm.unlock();
-
-
-
+ 
 #pragma region return 0;
-    #endif // MUTEX_3
+    
 
 
 
