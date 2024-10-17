@@ -32,27 +32,33 @@ inline void ttsleep(float t) { this_thread::sleep_for(chrono::milliseconds((int)
 #pragma endregion HEADERS
 #pragma region DEFINES
 
-#pragma region THREADS
+    #pragma region THREADS
 
-#pragma region MUTEX_
-    //#define MUTEX_1   // SimpleCode
-    //#define MUTEX_2   // SimpleCode
-    //#define MUTEX_3   // SimpleCode
-    //#define MUTEX_4   // SimpleCode
+                        // ( ) https://rekovalev.site/multithreading-3-cpp/
+        #pragma region MUTEX_
+            //#define MUTEX_1   // (+) SimpleCode
+            //#define MUTEX_2   // (+) SimpleCode
+            //#define MUTEX_3   // (+) SimpleCode
+            //#define MUTEX_4   // (+) SimpleCode
 
-    //#define MUTEX_5   // https://www.youtube.com/watch?v=gO6ck1CuuDE
-    //#define MUTEX_6   // https://www.youtube.com/watch?v=VhhsmgIRFsE
-#pragma endregion MUTEX_
-
-#pragma region SEMAPHORE_
-    #define SEMAPHORE_1
-#pragma endregion SEMAPHORE_
-
+            //#define MUTEX_5   // (+) https://www.youtube.com/watch?v=gO6ck1CuuDE
+            //#define MUTEX_6   // ( ) https://www.youtube.com/watch?v=VhhsmgIRFsE
 #pragma endregion mutex, reqursive_mutex, lock_guard, unique_lock mutex
 
-#pragma region voids
+        #pragma region SEMAPHORE_
+            //#define SEMAPHORE_1 // (+) https://www.basicexamples.com/example/cpp/std-binary-semaphore
+            #define SEMAPHORE_2 // ( )
+        #pragma endregion binary_semaphore, counting_semaphore
 
-#ifdef MUTEX_1
+    #pragma endregion 
+
+
+
+    #pragma region voids
+
+        #pragma region MUTEX_
+
+            #ifdef MUTEX_1
 
 mutex mtx;
 
@@ -83,9 +89,9 @@ void print(char ch)
     this_thread::sleep_for(chrono::milliseconds(2000));
 }
 
-#endif // MUTEX_1
+            #endif // MUTEX_1
 
-#ifdef MUTEX_2
+            #ifdef MUTEX_2
 
 mutex mtx1;
 mutex mtx2;
@@ -132,9 +138,9 @@ void Print2() {
 }
 
 
-#endif // MUTEX_2
+            #endif // MUTEX_2
 
-#ifdef MUTEX_3
+            #ifdef MUTEX_3
 
 static int C = 10;      // Number of calls
 recursive_mutex rm;
@@ -157,9 +163,9 @@ void Foo(int a, int C) {
 
 }
 
-#endif // MUTEX_3
+            #endif // MUTEX_3
 
-#ifdef MUTEX_4
+            #ifdef MUTEX_4
 
 mutex mtx;
 
@@ -196,9 +202,9 @@ void Print(char ch) {
 
 
 
-#endif
+            #endif
 
-#ifdef MUTEX_5
+            #ifdef MUTEX_5
 
 
 void foo(int& num, mutex& mtx) {
@@ -229,33 +235,40 @@ void bar(int& num, mutex& mtx) {
 }
 
 
-#endif // MUTEX_5
+            #endif // MUTEX_5
 
-#pragma endregion voids
+        #pragma endregion MUTEX_
+
+        #pragma region SEMAPHORE_
+            #ifdef SEMAPHORE_1
+
+binary_semaphore semaphore(1);
+
+void printThreadId(int id) {
+    semaphore.acquire();                         // Attempt to acquire the semaphore
+
+    w("Thread ["); w(id); w("]\tID: "); w(this_thread::get_id()); wl("\tis executing");
+
+    semaphore.release();                         // Release the semaphore
+}
+
+            #endif SEMAPHORE_1
+
+        #pragma endregion SEMAPHORE_
+
+    #pragma endregion voids
 
 #pragma endregion DEFS
 
 
 
-#ifdef SEMAPHORE_1
+
+
+#ifdef SEMAPHORE_2
 
 
 
-
-binary_semaphore semaphore(1);
-
-
-void printThreadId(int id) {
-    semaphore.acquire(); // Attempt to acquire the semaphore
-
-    w("Thread ["); w(id); w("] ID: "); w(this_thread::get_id()); wl("\tis executing");
-
-    semaphore.release(); // Release the semaphore
-}
-
-
-
-#endif SEMAPHORE_1
+#endif // SEMAPHORE_2
 
 
 
@@ -267,7 +280,7 @@ int main() {
     start();
     SimpleTimer t("main");
     
-
+#pragma region MUTEX_
 #ifdef MUTEX_1
 
     thread t1(print, '*');
@@ -333,8 +346,10 @@ int main() {
 
 
 #endif // MUTEX_5 
-    
-#pragma endregion main() {
+
+#pragma endregion MUTEX_
+
+#pragma region SEMAPHORE_
 #ifdef SEMAPHORE_1
 
 
@@ -345,8 +360,32 @@ int main() {
     t1.join();
     t2.join();
     t3.join();
-    
+
+
 #endif SEMAPHORE_1
+
+#pragma endregion SEMAPHORE_
+    
+#pragma endregion main() {
+
+
+
+
+#ifdef SEMAPHORE_2
+
+    counting_semaphore<5> sem(0);
+
+    sem.release();  // Increment the semaphore count by 1
+    sem.release(2); // Increment the semaphore count by 2
+
+    w("Semaphore count: "); wl(sem.available());
+
+
+#endif // SEMAPHORE_2
+
+
+
+
 #pragma region return 0;
     
 
