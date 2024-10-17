@@ -22,7 +22,7 @@ public:
 		_end = std::chrono::high_resolution_clock::now();
 		std::chrono::duration<float> duration = _end - _start;
 		if (Name.length() == 0) std::cout << "DURATION: " <<				 duration.count() << " sec" << std::endl;
-		else					std::cout << "DURATION "  << Name << ": " << duration.count() << " sec" << std::endl;
+		else					std::cout << "DURATION: " << Name << ": " << duration.count() << " sec" << std::endl;
 	}
 	std::string Name;
 

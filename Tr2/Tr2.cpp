@@ -8,6 +8,9 @@
 
 #include <thread>
 #include <mutex>
+#include <semaphore>
+
+
 
 using namespace std;
 
@@ -27,14 +30,23 @@ inline void ttsleep(float t) { this_thread::sleep_for(chrono::milliseconds((int)
 #pragma endregion sugar
 
 #pragma endregion HEADERS
-#pragma region DEFS
+#pragma region DEFINES
 
 #pragma region THREADS
 
-//#define MUTEX_1
-//#define MUTEX_2
-//#define MUTEX_3
-#define MUTEX_4
+#pragma region MUTEX_
+    //#define MUTEX_1   // SimpleCode
+    //#define MUTEX_2   // SimpleCode
+    //#define MUTEX_3   // SimpleCode
+    //#define MUTEX_4   // SimpleCode
+
+    //#define MUTEX_5   // https://www.youtube.com/watch?v=gO6ck1CuuDE
+    //#define MUTEX_6   // https://www.youtube.com/watch?v=VhhsmgIRFsE
+#pragma endregion MUTEX_
+
+#pragma region SEMAPHORE_
+    #define SEMAPHORE_1
+#pragma endregion SEMAPHORE_
 
 #pragma endregion mutex, reqursive_mutex, lock_guard, unique_lock mutex
 
@@ -186,20 +198,64 @@ void Print(char ch) {
 
 #endif
 
+#ifdef MUTEX_5
+
+
+void foo(int& num, mutex& mtx) {
+
+    while (1)
+    {
+        mtx.lock();
+            num += 2;
+            w("Foo: "); wl(num);
+        mtx.unlock();
+
+        ttsleep(0.05);
+    }
+}
+
+
+void bar(int& num, mutex& mtx) {
+
+    while (1)
+    {
+        mtx.lock();
+            num -= 2;
+            w("Bar: "); wl(num);
+        mtx.unlock();
+
+        ttsleep(0.05);
+    }
+}
+
+
+#endif // MUTEX_5
+
 #pragma endregion voids
 
 #pragma endregion DEFS
 
 
 
+#ifdef SEMAPHORE_1
 
 
 
 
+binary_semaphore semaphore(1);
+
+
+void printThreadId(int id) {
+    semaphore.acquire(); // Attempt to acquire the semaphore
+
+    w("Thread ["); w(id); w("] ID: "); w(this_thread::get_id()); wl("\tis executing");
+
+    semaphore.release(); // Release the semaphore
+}
 
 
 
-
+#endif SEMAPHORE_1
 
 
 
@@ -262,9 +318,35 @@ int main() {
 
 
 #endif 
+
+#ifdef MUTEX_5
+
+
+    int num = 10;
+    mutex mtx;
+
+    thread t1(foo, ref(num), ref(mtx));
+    thread t2(bar, ref(num), ref(mtx));
+
+    t1.join();
+    t2.join();
+
+
+#endif // MUTEX_5 
     
 #pragma endregion main() {
- 
+#ifdef SEMAPHORE_1
+
+
+    thread t1(printThreadId, 1);
+    thread t2(printThreadId, 2);
+    thread t3(printThreadId, 3);
+
+    t1.join();
+    t2.join();
+    t3.join();
+    
+#endif SEMAPHORE_1
 #pragma region return 0;
     
 
