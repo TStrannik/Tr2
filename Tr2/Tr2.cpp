@@ -18,11 +18,6 @@ using namespace std;
 
 #pragma region syntax
 
-void start() {
-    setlocale(LC_ALL, "RU_ru");
-    system("color 70\n cls\n");
-}
-
 template <typename T> void w (T s) { std::cout << s; }
 template <typename T> void wl(T s) { std::cout << s << std::endl; }
 void wl() { std::cout << std::endl; }
@@ -40,22 +35,24 @@ inline void ttsleep(float t) { this_thread::sleep_for(chrono::milliseconds((int)
         // ( ) https://rekovalev.site/multithreading-3-cpp/
                         
             #pragma region MUTEX_
-            //#define MUTEX_1   // (+) [mutex] S.C... 
-            //#define MUTEX_2   // (+) [lock_guard] S.C...
-            //#define MUTEX_3   // (+) [reqursive_mutex] S.C...
-            //#define MUTEX_4   // (+) [unique_lock] S.C...
+                //#define MUTEX_1   // (+) [mutex] S.C... 
+                //#define MUTEX_2   // (+) [lock_guard] S.C...
+                //#define MUTEX_3   // (+) [reqursive_mutex] S.C...
+                //#define MUTEX_4   // (+) [unique_lock] S.C...
 
-            //#define MUTEX_5   // (+) [mutex][lock\unlock] https://www.youtube.com/watch?v=gO6ck1CuuDE
-            //#define MUTEX_6   // ( )  https://www.youtube.com/watch?v=VhhsmgIRFsE
-        #pragma endregion mutex, reqursive_mutex, lock_guard, unique_lock
+                //#define MUTEX_5   // (+) [mutex][lock\unlock] https://www.youtube.com/watch?v=gO6ck1CuuDE
+                //#define MUTEX_6   // ( )  https://www.youtube.com/watch?v=VhhsmgIRFsE
+            #pragma endregion mutex, reqursive_mutex, lock_guard, unique_lock
 
             #pragma region SEMAPHORE_
-            //#define SEMAPHORE_1 // (+) https://www.basicexamples.com/example/cpp/std-binary-semaphore
-            //#define SEMAPHORE_2 // (+) https://rekovalev.site/multithreading-3-cpp/#sem
-        #pragma endregion binary_semaphore, counting_semaphore
+                //#define SEMAPHORE_1 // (+) https://www.basicexamples.com/example/cpp/std-binary-semaphore
+                //#define SEMAPHORE_2 // (+) https://rekovalev.site/multithreading-3-cpp/#sem
+
+                //#define SEMAPHORE_10 // (+) training
+            #pragma endregion binary_semaphore, counting_semaphore
 
             #pragma region SYNC-ASYNC_
-                //#define ASYNC_1  // (+) [future]
+                //#define ASYNC_1  // (+) [future][async]
                 #define ASYNC_2  // ( )
             #pragma endregion furure,
 
@@ -272,6 +269,7 @@ void bar(int& num, mutex& mtx) {
         #pragma endregion MUTEX_
 
         #pragma region SEMAPHORE_
+
             #ifdef SEMAPHORE_1
 
 binary_semaphore semaphore(1);
@@ -300,6 +298,31 @@ void worker(int id)
     sem.release();
 }
             #endif // SEMAPHORE_2
+
+            #ifdef SEMAPHORE_10
+
+counting_semaphore <2> sem(2);
+
+void op1(vector <int>& vec, string& res) {
+    sem.acquire();
+    for (auto i : vec) if (i % 10 == 0) { w("op1 "); res += (to_string(i) + " "); ttsleep(0.1); }
+    wl();
+    sem.release();
+}
+void op2(vector <int>& vec, string& res) {
+    sem.acquire();
+    for (auto i : vec) if (i % 5 == 0) { w("op2 "); res += (to_string(i) + " "); ttsleep(0.1); }
+    wl();
+    sem.release();
+}
+void op3(vector <int>& vec, string& res) {
+    sem.acquire();
+    for (auto i : vec) if (i % 3 == 0) { w("op3 "); res += (to_string(i) + " "); ttsleep(0.1); }
+    wl();
+    sem.release();
+}
+
+            #endif // SEMAPHORE_10
 
         #pragma endregion SEMAPHORE_
 
@@ -342,15 +365,11 @@ int threadFunction()
 
 
 
-
-
-
-
-
-
 #pragma region int
 int main() {
-    start();
+    setlocale(LC_ALL, "RU_ru");
+    system("color 70\n cls\n");
+
     SimpleTimer t("main");
 
 
@@ -429,7 +448,7 @@ int main() {
 
     #pragma region SEMAPHORE_
 
-#ifdef SEMAPHORE_1
+        #ifdef SEMAPHORE_1
 
 
     thread t1(printThreadId, 1);
@@ -441,9 +460,9 @@ int main() {
     t3.join();
 
 
-#endif // SEMAPHORE_1
+        #endif // SEMAPHORE_1
 
-#ifdef SEMAPHORE_2
+        #ifdef SEMAPHORE_2
 
     thread threads[10];
 
@@ -454,7 +473,30 @@ int main() {
 
     for (auto& t : threads)
         t.join();
-#endif // SEMAPHORE_2
+        #endif // SEMAPHORE_2
+
+        #ifdef SEMAPHORE_10
+    vector <string> vout = { "", "", "" };
+
+    vector vec = { 5, 10, 15, 20, 25, 30, 35, 40, 45, 50,
+                    55, 60, 65, 70, 75, 80, 85, 90, 95, 100 };
+
+
+    thread t1(op1, ref(vec), ref(vout.at(0)));
+    ttsleep(0.1);
+    thread t2(op2, ref(vec), ref(vout.at(1)));
+    ttsleep(0.1);
+    thread t3(op3, ref(vec), ref(vout.at(2)));
+
+    t1.join();
+    t2.join();
+    t3.join();
+
+
+    w(vout.at(0)); w(" "); wl();
+    w(vout.at(1)); w(" "); wl();
+    w(vout.at(2)); w(" "); wl();
+        #endif // SEMAPHORE_10
 
 #pragma endregion SEMAPHORE_
 
@@ -494,6 +536,7 @@ int main() {
         async(launch::async, []() {
             for (int i = 0; i < 15; i++) { wl("2"); ttsleep(0.1); }
         });
+
 
 
 #pragma region return 0;
