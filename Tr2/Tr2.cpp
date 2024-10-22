@@ -33,6 +33,7 @@ inline void ttsleep(float t) { this_thread::sleep_for(chrono::milliseconds((int)
 
         #pragma region THREADS_
         // ( ) https://rekovalev.site/multithreading-3-cpp/
+        // ( ) https://learntutorials.net/ru/cplusplus/topic/9840/фьючерсы-и-обещания
                         
             #pragma region MUTEX_
                 //#define MUTEX_1   // (+) [mutex] S.C... 
@@ -53,22 +54,28 @@ inline void ttsleep(float t) { this_thread::sleep_for(chrono::milliseconds((int)
 
             #pragma region SYNC-ASYNC_
                 //#define ASYNC_1  // (+) [future][async]
-                #define ASYNC_2  // ( )
-            #pragma endregion furure,
+                //#define ASYNC_2  // (+) [promise]
+                //#define ASYNC_3  // (+) [future][async]
+                //#define ASYNC_4  // (+) [future][async]
+            #pragma endregion furure, async, promise
+
+            #pragma region POSIX_
+                //#define POSIX_1  // (+) []
+            #pragma endregion pthread,
 
             #pragma region BARRIERS_
                 //#define BARRIERS_1  // ()
             #pragma endregion 
 
             #pragma region ATOMIC_
-            //#define AROMIC_1  // ()
-        #pragma endregion 
+                //#define AROMIC_1  // ()
+            #pragma endregion 
 
             #pragma region CRITSECTION_
-            //#define CRITSECTION_1   // ( )
-        #pragma endregion 
+                //#define CRITSECTION_1   // ( )
+            #pragma endregion 
 
-        #pragma endregion mutex, semaphore, atomic, sync-async
+        #pragma endregion mutex, semaphore, atomic, sync-async, POSIX
 
         #pragma region CODE_OPTIMISATION_
         // ( ) https://habr.com/ru/companies/vk/articles/279449/
@@ -330,16 +337,21 @@ void op3(vector <int>& vec, string& res) {
 
             #ifdef ASYNC_1
 
-int threadFunction()
-{
-    wl("threadFunction start ");
-    ttsleep(1);
-    wl("threadFunction ready ");
-    return 42;
-}
+            int threadFunction()
+            {
+                wl("threadFunction start ");
+                ttsleep(1);
+                wl("threadFunction ready ");
+                return 42;
+            }
 
             #endif // ASYNC_1
  
+            #ifdef ASYNC_3
+int func() { ttsleep(3); return 41; }
+            #endif // ASYNC_3
+
+
         #pragma endregion 
 
 
@@ -349,19 +361,36 @@ int threadFunction()
 #pragma endregion DEFS
 
 
-#ifdef ASYNC_2
-
-#endif // ASYNC_2
-#ifdef ASYNC_2
-
-#endif // ASYNC_2
+#ifdef POSIX_1
+#endif // POSIX_1            
 
 //===============================================================================
 
 
+timed_mutex tmtx;
 
 
 
+void Foo(char c) {
+
+    if (tmtx.try_lock_for(std::chrono::milliseconds(5)))
+    {
+        for (size_t i = 0; i < 5; i++)
+        {
+            for (size_t j = 0; j < 5; j++)
+            {
+                w(c);
+                ttsleep(.1);
+            }
+            wl();
+        }
+        wl();
+
+        tmtx.unlock();
+    } 
+     else {  }
+
+}
 
 
 
@@ -374,170 +403,216 @@ int main() {
 
 
 
-#pragma region THREADS_
+    #pragma region THREADS_
 
-    #pragma region MUTEX_
+        #pragma region MUTEX_
 
-    #ifdef MUTEX_1
+            #ifdef MUTEX_1
 
-    thread t1(print, '*');
-    thread t2(print, '#');
-    thread t3(print, '@');
+        thread t1(print, '*');
+        thread t2(print, '#');
+        thread t3(print, '@');
 
-    t1.join();
-    t2.join();
-    t3.join();
+        t1.join();
+        t2.join();
+        t3.join();
     
 
-    // print('*');
-    // print('#');
-    // print('@');
+        // print('*');
+        // print('#');
+        // print('@');
 
-    #endif // MUTEX_1
+            #endif // MUTEX_1
 
-    #ifdef MUTEX_2
+            #ifdef MUTEX_2
 
-    thread t1(Print);
-    thread t2(Print2);
+        thread t1(Print);
+        thread t2(Print2);
 
-    t1.join();
-    t2.join();
+        t1.join();
+        t2.join();
 
-    #endif // MUTEX_2
+            #endif // MUTEX_2
 
-    #ifdef MUTEX_3
+            #ifdef MUTEX_3
 
-    thread t1(Foo, 10, C);
-    thread t2(Foo, 10, C);
+        thread t1(Foo, 10, C);
+        thread t2(Foo, 10, C);
 
-    t1.join();
-    t2.join();
+        t1.join();
+        t2.join();
 
-    wl(); wl(C);
+        wl(); wl(C);
 
-    #endif // MUTEX_3
+            #endif // MUTEX_3
 
-    #ifdef MUTEX_4
-
-
-    thread t1(Print, '#');
-    thread t2(Print, '@');
-
-    t1.join();
-    t2.join();
+            #ifdef MUTEX_4
 
 
-    #endif 
+        thread t1(Print, '#');
+        thread t2(Print, '@');
 
-    #ifdef MUTEX_5
-
-
-    int num = 10;
-    mutex mtx;
-
-    thread t1(foo, ref(num), ref(mtx));
-    thread t2(bar, ref(num), ref(mtx));
-
-    t1.join();
-    t2.join();
+        t1.join();
+        t2.join();
 
 
-    #endif // MUTEX_5 
+            #endif 
 
-#pragma endregion MUTEX_
-
-    #pragma region SEMAPHORE_
-
-        #ifdef SEMAPHORE_1
+            #ifdef MUTEX_5
 
 
-    thread t1(printThreadId, 1);
-    thread t2(printThreadId, 2);
-    thread t3(printThreadId, 3);
+        int num = 10;
+        mutex mtx;
 
-    t1.join();
-    t2.join();
-    t3.join();
+        thread t1(foo, ref(num), ref(mtx));
+        thread t2(bar, ref(num), ref(mtx));
 
-
-        #endif // SEMAPHORE_1
-
-        #ifdef SEMAPHORE_2
-
-    thread threads[10];
-
-    for (size_t i = 0; i < 10; ++i) {
-        threads[i] = thread(worker, i + 1);
-        //ttsleep(0.5);
-    }
-
-    for (auto& t : threads)
-        t.join();
-        #endif // SEMAPHORE_2
-
-        #ifdef SEMAPHORE_10
-    vector <string> vout = { "", "", "" };
-
-    vector vec = { 5, 10, 15, 20, 25, 30, 35, 40, 45, 50,
-                    55, 60, 65, 70, 75, 80, 85, 90, 95, 100 };
+        t1.join();
+        t2.join();
 
 
-    thread t1(op1, ref(vec), ref(vout.at(0)));
-    ttsleep(0.1);
-    thread t2(op2, ref(vec), ref(vout.at(1)));
-    ttsleep(0.1);
-    thread t3(op3, ref(vec), ref(vout.at(2)));
+            #endif // MUTEX_5 
 
-    t1.join();
-    t2.join();
-    t3.join();
+        #pragma endregion MUTEX_
+
+        #pragma region SEMAPHORE_
+
+            #ifdef SEMAPHORE_1
 
 
-    w(vout.at(0)); w(" "); wl();
-    w(vout.at(1)); w(" "); wl();
-    w(vout.at(2)); w(" "); wl();
-        #endif // SEMAPHORE_10
+        thread t1(printThreadId, 1);
+        thread t2(printThreadId, 2);
+        thread t3(printThreadId, 3);
 
-#pragma endregion SEMAPHORE_
+        t1.join();
+        t2.join();
+        t3.join();
 
-    #pragma region SYNC-ASYNC
 
-        #ifdef ASYNC_1
+            #endif // SEMAPHORE_1
+
+            #ifdef SEMAPHORE_2
+
+        thread threads[10];
+
+        for (size_t i = 0; i < 10; ++i) {
+            threads[i] = thread(worker, i + 1);
+            //ttsleep(0.5);
+        }
+
+        for (auto& t : threads)
+            t.join();
+            #endif // SEMAPHORE_2
+
+            #ifdef SEMAPHORE_10
+        vector <string> vout = { "", "", "" };
+
+        vector vec = { 5, 10, 15, 20, 25, 30, 35, 40, 45, 50,
+                        55, 60, 65, 70, 75, 80, 85, 90, 95, 100 };
+
+
+        thread t1(op1, ref(vec), ref(vout.at(0)));
+        ttsleep(0.1);
+        thread t2(op2, ref(vec), ref(vout.at(1)));
+        ttsleep(0.1);
+        thread t3(op3, ref(vec), ref(vout.at(2)));
+
+        t1.join();
+        t2.join();
+        t3.join();
+
+
+        w(vout.at(0)); w(" "); wl();
+        w(vout.at(1)); w(" "); wl();
+        w(vout.at(2)); w(" "); wl();
+            #endif // SEMAPHORE_10
+
+    #pragma endregion SEMAPHORE_
+
+        #pragma region SYNC-ASYNC
+
+            #ifdef ASYNC_1
 
     future <int> asyncFuture = async(threadFunction);           // Запуск асинхронной задачи
-
-
+    
+    
     wl("main start ");
     ttsleep(4);
     wl("main ready ");
-
-
+    
+    
     int result = asyncFuture.get();
     w("Result: "); wl(result);
+    
+            #endif // ASYNC_1
+    
+            #ifdef ASYNC_2
+    
+    
+    auto prom1 = std::promise <string>();
+    auto prom2 = std::promise <int>();
+    
+    auto t1 = thread([&] {
+        prom1.set_value("Gavka");
+        prom2.set_value(41);
+        });
+    
+    future <string> futr1 = prom1.get_future();
+    auto futr2 = prom2.get_future();
+    
+    thread t2 = thread([&] {
+        wl(futr1.get());
+        wl(futr2.get());
+        });
+    
+    
+    t1.join();
+    t2.join();
 
-        #endif // ASYNC_1
+
+            #endif // ASYNC_2
+
+            #ifdef ASYNC_3
 
 
-    #pragma endregion SYNC-ASYNC
+    //std::future <int>
+    /*auto futr1 = async(func);
+    w("Результат: "); wl(futr1.get());*/
+    
+    w("Результат: "); wl(async(func).get());
 
-#pragma endregion THREADS_
+
+            #endif // ASYNC_3
+
+            #ifdef ASYNC_4
+
+    future <void> asFut1 =
+    async(launch::async, []() {
+    for (int i = 0; i < 15; i++) { wl("1"); ttsleep(0.1); }
+    });
+    
+    future <void> asFut2 =
+    async(launch::async, []() {
+    for (int i = 0; i < 15; i++) { wl("2"); ttsleep(0.1); }
+    });
+
+            #endif // ASYNC_4
+
+        #pragma endregion SYNC-ASYNC
+
+    #pragma endregion THREADS_
 
 
     
 #pragma endregion main() {
 
-    
-    future <void> asFut1 =
-        async(launch::async, []() {
-            for (int i = 0; i < 15; i++) { wl("1"); ttsleep(0.1); }
-        });
+    thread t1(Foo, '#');
+    thread t2(Foo, '@');
+    thread t3(Foo, '%');
 
-    future <void> asFut2 =
-        async(launch::async, []() {
-            for (int i = 0; i < 15; i++) { wl("2"); ttsleep(0.1); }
-        });
-
-
+    t1.join();
+    t2.join();
+    t3.join();
 
 #pragma region return 0;
     
@@ -548,3 +623,4 @@ int main() {
     return 0;
 }
 #pragma endregion }
+
