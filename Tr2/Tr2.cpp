@@ -13,6 +13,8 @@
 #include <atomic>
 #include <future>
 #include <condition_variable>
+#include <barrier>
+
 
 using namespace std;
 
@@ -23,6 +25,31 @@ template <typename T> void wl(T s) { std::cout << s << std::endl; }
 void wl() { std::cout << std::endl; }
 
 inline void ttsleep(float t) { this_thread::sleep_for(chrono::milliseconds((int)(t * 1000))); }
+
+void rect(char c, float d) {
+    for (size_t i = 0; i < 5; i++)
+    {
+        for (size_t j = 0; j < 5; j++)
+        {
+            w(c);
+            ttsleep(d);
+        }
+        wl();
+    }
+    wl();
+}
+void rect(char c) {
+    rect(c, 0.1F);
+}
+void rect(float d) {
+    rect('#', d);
+}
+void rect(string c) {
+    rect(c.c_str());
+}
+void rect() {
+    rect('#');
+}
 
 #pragma endregion sugar
 
@@ -40,10 +67,12 @@ inline void ttsleep(float t) { this_thread::sleep_for(chrono::milliseconds((int)
                 //#define MUTEX_2   // (+) [lock_guard] S.C...
                 //#define MUTEX_3   // (+) [reqursive_mutex] S.C...
                 //#define MUTEX_4   // (+) [unique_lock] S.C...
+                //#define MUTEX_4_2 // (+) [timed_mutex]
 
                 //#define MUTEX_5   // (+) [mutex][lock\unlock] https://www.youtube.com/watch?v=gO6ck1CuuDE
                 //#define MUTEX_6   // ( )  https://www.youtube.com/watch?v=VhhsmgIRFsE
-            #pragma endregion mutex, reqursive_mutex, lock_guard, unique_lock
+
+            #pragma endregion mutex, reqursive_mutex, lock_guard, unique_lock, timed_mutex, try_lock_for
 
             #pragma region SEMAPHORE_
                 //#define SEMAPHORE_1 // (+) https://www.basicexamples.com/example/cpp/std-binary-semaphore
@@ -68,14 +97,29 @@ inline void ttsleep(float t) { this_thread::sleep_for(chrono::milliseconds((int)
             #pragma endregion 
 
             #pragma region ATOMIC_
-                //#define AROMIC_1  // ()
-            #pragma endregion 
+                //#define ATOMIC_1  // (+) [condition_variable]
+                //#define ATOMIC_2  // (+) [atomic] https://www.youtube.com/watch?v=ZWjVa1kfE7c
+                //#define ATOMIC_3  // (+) [atomic_bool] 
+                //#define ATOMIC_4  // (..) [atomic_flags] TODO: Надо располнять
+            #pragma endregion condition_variable, atomic, atomic_bool, atomic_flags
+
+            #pragma region BARRIERS_LATCH_
+                //#define BARRIER_1   // (?) []
+                //#define LATCH_1 // () []
+            #pragma endregion std::barrier
 
             #pragma region CRITSECTION_
                 //#define CRITSECTION_1   // ( )
             #pragma endregion 
 
         #pragma endregion mutex, semaphore, atomic, sync-async, POSIX
+
+        #pragma region EXCEPTIONS_
+            //#define EXCEPTIONS_1
+        #pragma endregion try-catch, throw, cerr, exception, exception_ptr...
+
+        #pragma region WINAPI
+        #pragma endregion
 
         #pragma region CODE_OPTIMISATION_
         // ( ) https://habr.com/ru/companies/vk/articles/279449/
@@ -92,7 +136,9 @@ inline void ttsleep(float t) { this_thread::sleep_for(chrono::milliseconds((int)
 
     #pragma region voids
 
-        #pragma region MUTEX_
+        #pragma region THREADS
+
+            #pragma region MUTEX_
 
             #ifdef MUTEX_1
 
@@ -240,6 +286,27 @@ void Print(char ch) {
 
             #endif
 
+            #ifdef MUTEX_4_2
+
+timed_mutex tmtx;
+
+void Foo(char c) {
+
+    if (tmtx.try_lock_for(std::chrono::milliseconds(1500))) {
+
+        rect(c);
+
+        tmtx.unlock();
+
+    }
+    else {
+        rect(c);
+    }
+
+}
+
+            #endif
+
             #ifdef MUTEX_5
 
 
@@ -275,7 +342,7 @@ void bar(int& num, mutex& mtx) {
 
         #pragma endregion MUTEX_
 
-        #pragma region SEMAPHORE_
+            #pragma region SEMAPHORE_
 
             #ifdef SEMAPHORE_1
 
@@ -333,7 +400,7 @@ void op3(vector <int>& vec, string& res) {
 
         #pragma endregion SEMAPHORE_
 
-        #pragma region SYNC-ASYNC_
+            #pragma region SYNC-ASYNC_
 
             #ifdef ASYNC_1
 
@@ -354,43 +421,79 @@ int func() { ttsleep(3); return 41; }
 
         #pragma endregion 
 
+            #pragma region ATOMIC_
+
+                #ifdef ATOMIC_1
+
+
+mutex mtx;
+condition_variable cv;
+bool ready = false;
+
+void waiting_thread() {
+    unique_lock <mutex> lck(mtx);
+
+    while (!ready) {
+        wl("ОЖИДАЮЩИЙ ПОТОК: ожидание сигнала...");
+        cv.wait(lck);
+    }
+
+    wl("ОЖИДАЮЩИЙ ПОТОК: получен сигнал.");
+}
+
+void signaling_thread() {
+    ttsleep(1);
+
+    unique_lock <mutex> lck(mtx);
+    ready = true;
+
+    wl("СИГНАЛИЗУЮЩИЙ ПОТОК: выдаём сигнал.");
+    cv.notify_all();
+}
+
+                #endif // ATOMIC_1
+
+                #ifdef ATOMIC_4
+
+#define N_THREADS 5
+
+atomic_flag lock = ATOMIC_FLAG_INIT;
+
+
+void simpleSpinLock(int id, char c)
+{
+    while (::lock.test_and_set(memory_order_acquire))
+    {
+        // Блокировка занята, ждем
+        rect(c, 0.1);
+    }
+
+    w("поток "); wl(id);
+    ttsleep(1);
+
+    ::lock.clear(memory_order_release);
+}
+
+                #endif // ATOMIC_4
+
+            #pragma endregion 
+
+    #pragma endregion THREADS
+
+        #pragma region EXCEPTIONS
+
+    #pragma endregion 
 
 
     #pragma endregion methods for lessons
 
 #pragma endregion DEFS
 
-
-#ifdef POSIX_1
-#endif // POSIX_1            
-
 //===============================================================================
 
 
-timed_mutex tmtx;
 
 
-
-void Foo(char c) {
-
-    if (tmtx.try_lock_for(std::chrono::milliseconds(5)))
-    {
-        for (size_t i = 0; i < 5; i++)
-        {
-            for (size_t j = 0; j < 5; j++)
-            {
-                w(c);
-                ttsleep(.1);
-            }
-            wl();
-        }
-        wl();
-
-        tmtx.unlock();
-    } 
-     else {  }
-
-}
 
 
 
@@ -457,6 +560,19 @@ int main() {
 
 
             #endif 
+
+            #ifdef MUTEX_4_2
+
+                    thread t1(Foo, '#');
+                    thread t2(Foo, '@');
+                    thread t3(Foo, '%');
+
+                    t1.join();
+                    t2.join();
+                    t3.join();
+
+            #endif
+
 
             #ifdef MUTEX_5
 
@@ -600,19 +716,83 @@ int main() {
 
         #pragma endregion SYNC-ASYNC
 
+        #pragma region ATOMIC_
+
+            #ifdef ATOMIC_1
+
+    thread w_thread(waiting_thread);
+    thread s_thread(signaling_thread);
+
+    w_thread.join();
+    s_thread.join();
+
+            #endif // ATOMIC_1
+
+            #ifdef ATOMIC_2
+
+
+
+    // int counter = 0;
+    atomic <int> counter = 0;
+
+    auto work = [&counter]() {
+        for (int i = 0; i < 10000; i++)
+        {
+            counter += 1;
+        }
+        };
+
+    thread t1(work);
+    thread t2(work);
+
+    t1.join();
+    t2.join();
+
+
+    //wl(counter);
+    wl(counter.load());
+
+
+            #endif // ATOMIC_2
+
+            #ifdef ATOMIC_3
+    atomic_bool x = false;
+    w("atomic boolean is implemented lock free - "); wl(x.is_lock_free() ? "yes" : "no");
+
+    atomic_bool y = true;
+    x.store(false);
+    x.store(y);
+    w("value of atomic bool y - "); wl(y.load());
+
+    bool z = x.exchange(false);
+    w("current value of atomic bool x - "); wl(x.load());
+    w("previous value of atomic bool x - "); wl(z);
+    w("current value of atomic bool x - "); wl(x.load()); wl();
+            #endif //ATOMIC_3
+
+            #ifdef ATOMIC_4
+
+    thread threads[N_THREADS];
+
+    for (int i = 0; i < N_THREADS; i++)
+        threads[i] = thread(simpleSpinLock, i, (char)(60 + i));
+
+    for (auto& thread : threads)
+        thread.join();
+
+            #endif // ATOMIC_4
+
+        #pragma endregion
+
     #pragma endregion THREADS_
 
 
     
 #pragma endregion main() {
+    
+    
+    
 
-    thread t1(Foo, '#');
-    thread t2(Foo, '@');
-    thread t3(Foo, '%');
-
-    t1.join();
-    t2.join();
-    t3.join();
 
 #pragma region return 0;
     
@@ -623,4 +803,3 @@ int main() {
     return 0;
 }
 #pragma endregion }
-
