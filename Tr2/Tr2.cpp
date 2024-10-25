@@ -492,9 +492,14 @@ void simpleSpinLock(int id, char c)
 //===============================================================================
 
 
+namespace Util {
+    template <typename T, typename U>
+    void utilFunc(unique_ptr <T> lhs, unique_ptr <U> rhs) {}
+}
 
 
-
+class Lhs {};
+class Rhs {};
 
 
 #pragma region int
@@ -791,7 +796,10 @@ int main() {
 #pragma endregion main() {
     
     
-    
+
+    Util::utilFunc(make_unique <Lhs> (new Lhs()), make_unique <Rhs> (new Rhs()));
+
+
 
 
 #pragma region return 0;
